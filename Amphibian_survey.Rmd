@@ -1,0 +1,98 @@
+---
+title: "Amphibian survey"
+author: "Julianna Renzi"
+date: "1/19/2021"
+output: html_document
+---
+
+---
+title: "Assignment 1, Task 1: Sierra Lakes amphibians"
+author: "Julianna Renzi"
+date: "1/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# load packages
+library(tidyverse) # data wrangling
+library(patchwork) # compound figures
+library(readxl) # reading Excel files
+library(here) # relative paths
+library(lubridate) # dates and time
+
+```
+
+## Plot 1: _Rana muscosa_ abundance by life stage over time
+
+```{r}
+setwd("/Users/juliannarenzi/Documents/ESM_244/Assignments/Assignment_1")
+
+# read in data
+sierra_amph <- read_excel(here("sierra_amphibians.xlsx")) %>% 
+  mutate(survey_date = ymd(survey_date)) %>% # get survey dates in lubridate form
+  mutate(year = year(survey_date))# make a column for the year of each survey for grouping
+ 
+
+# make a subset for the first plot with just Rana muscosa and summarize as needed
+ramu_abund <- sierra_amph %>%
+  filter(amphibian_species == "RAMU") %>% # just want Rana muscosa
+  filter(amphibian_life_stage != "EggMass") %>%  # filter out egg observations
+  group_by(amphibian_life_stage, year) %>%
+  summarize(Abundance = sum(amphibian_number, na.rm = TRUE))
+
+```
+
+Plot the abundance of the mountain yellow-legged frog (_Rana muscosa_) by life stage over time within the entire survey area 
+
+```{r}
+ramu_abund_fig <- ramu_abund %>% 
+  ggplot(aes(x = year, y = Abundance, group = amphibian_life_stage)) +
+  geom_line(aes(color = amphibian_life_stage)) +
+  theme_minimal() +
+  ylab("R. muscosa abundance") +
+  xlab("Year") +
+  theme(legend.position = "top")
+
+ramu_abund_fig
+
+```
+
+## Plot 2: adult and subadult _Rana muscosa_ observed across the 5 most abundant lakes
+
+```{r}
+# subset the data to get abundances from top 5 lakes
+ramu_5lake <- sierra_amph %>%
+  filter(amphibian_species == "RAMU") %>% # just want Rana muscosa
+  filter(amphibian_life_stage != "EggMass", amphibian_life_stage != "Tadpole") %>% # this time also don't want tadpoles
+  mutate(lake_id = str_c("Lake ", lake_id)) %>% # make these more understandable
+  group_by(lake_id) %>% 
+  summarize(Abundance = sum(amphibian_number, na.rm = TRUE)) %>% 
+  slice_max(Abundance, n = 5) # get the 5 max values of abundance
+
+```
+
+Now make a column graph of the results.
+
+```{r}
+five_lake_fig <- ramu_5lake %>% 
+  mutate(lake_id = fct_reorder(lake_id, Abundance)) %>% # reorder lake_id based on abundance values for visualization
+  ggplot(aes(x = lake_id, y = Abundance)) +
+  geom_col(fill = c("coral", "darkblue", "orange", "purple", "lightgreen")) + 
+  coord_flip() +
+  ylab("R. muscosa abundance (# frogs)") +
+  xlab("Lake ID") +
+  theme_minimal()
+
+five_lake_fig
+```
+
+
+## Combined figure with both plots
+
+```{r}
+five_lake_fig / ramu_abund_fig
+
+```
+## ADD CAPTION, FIG LABELS (compound), AND REMOVE WARNING MESSAGES
