@@ -12,7 +12,7 @@ date: "1/16/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 # load packages
@@ -26,9 +26,7 @@ library(lubridate) # dates and time
 
 ## Plot 1: _Rana muscosa_ abundance by life stage over time
 
-```{r}
-setwd("/Users/juliannarenzi/Documents/ESM_244/Assignments/Assignment_1")
-
+```{r, warning = FALSE, message = FALSE}
 # read in data
 sierra_amph <- read_excel(here("sierra_amphibians.xlsx")) %>% 
   mutate(survey_date = ymd(survey_date)) %>% # get survey dates in lubridate form
@@ -46,14 +44,16 @@ ramu_abund <- sierra_amph %>%
 
 Plot the abundance of the mountain yellow-legged frog (_Rana muscosa_) by life stage over time within the entire survey area 
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 ramu_abund_fig <- ramu_abund %>% 
   ggplot(aes(x = year, y = Abundance, group = amphibian_life_stage)) +
   geom_line(aes(color = amphibian_life_stage)) +
+  scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9")) +
   theme_minimal() +
-  ylab("R. muscosa abundance") +
+  ylab(expression(paste(italic("R. muscosa"), " abundance (# frogs)"))) +
   xlab("Year") +
-  theme(legend.position = "top")
+  theme(legend.position = "top") +
+  guides(color=guide_legend(title="Life stage")) # change legend title
 
 ramu_abund_fig
 
@@ -61,7 +61,7 @@ ramu_abund_fig
 
 ## Plot 2: adult and subadult _Rana muscosa_ observed across the 5 most abundant lakes
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 # subset the data to get abundances from top 5 lakes
 ramu_5lake <- sierra_amph %>%
   filter(amphibian_species == "RAMU") %>% # just want Rana muscosa
@@ -75,13 +75,13 @@ ramu_5lake <- sierra_amph %>%
 
 Now make a column graph of the results.
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 five_lake_fig <- ramu_5lake %>% 
   mutate(lake_id = fct_reorder(lake_id, Abundance)) %>% # reorder lake_id based on abundance values for visualization
   ggplot(aes(x = lake_id, y = Abundance)) +
   geom_col(fill = c("coral", "darkblue", "orange", "purple", "lightgreen")) + 
   coord_flip() +
-  ylab("R. muscosa abundance (# frogs)") +
+  ylab(expression(paste(italic("R. muscosa"), " abundance (# frogs)"))) +
   xlab("Lake ID") +
   theme_minimal()
 
@@ -91,8 +91,8 @@ five_lake_fig
 
 ## Combined figure with both plots
 
-```{r}
-five_lake_fig / ramu_abund_fig
+```{r, warning = FALSE, message = FALSE}
+five_lake_fig / ramu_abund_fig + plot_annotation(tag_levels = 'A',
+                                                 caption = str_wrap('Panel A: Rana muscosa adult and subadult abundance in the five lakes with the highest R. muscosa abundance. Panel B: R. muscosa abundance over survey years in the adult, sub-adult, and tadpole life stage'))
 
 ```
-## ADD CAPTION, FIG LABELS (compound), AND REMOVE WARNING MESSAGES
